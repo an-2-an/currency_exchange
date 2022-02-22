@@ -6,12 +6,14 @@ class CurrencyExchanger:
         self.amount = None
         self.currency_name = None
         self.rates = {
-            'USD': None,
-            'EUR': None,
+
         }
 
     def get_currency_name(self):
-        return input('Please, enter the name of currency: > ')
+        return input('Please, enter the name of main currency: > ')
+
+    def get_currency_exchange_name(self):
+        return input('Please, enter the name of exchange currency: > ').upper()
 
     def get_currency_amount(self):
         return float(input(f'Please, enter the number of {self.currency_name} you have: > '))
@@ -24,16 +26,31 @@ class CurrencyExchanger:
             print(f'I will get {round(self.amount * rate, 2):.2f} {curr} from the sale of {self.amount:.2f} {self.currency_name}.')
 
     def get_data(self):
-        return requests.get(f'http://www.floatrates.com/daily/{self.currency_name}.json').json()
+        return requests.get(f'http://www.floatrates.com/daily/{self.currency_name.lower()}.json').json()
 
     def start(self):
         self.currency_name = self.get_currency_name()
         self.amount = self.get_currency_amount()
         data = self.get_data()
-        # print(data)
-        for key in self.rates.keys():
-            self.rates[key] = data[key.lower()].get('rate')
-        self.show_result()
+        for cn in 'USD', 'EUR':
+            self.rates[cn] = data[cn.lower()].get('rate')
+        # print(self.rates)
+        while True:
+            cn = self.get_currency_exchange_name()
+            if not cn:
+                break
+            print('Checking the cache...')
+            if cn in self.rates.keys():
+                print('It is in the cache!')
+                rate = self.rates[cn]
+                print(f'You received {round(rate * self.amount, 2):.2f} {cn}')
+            else:
+                print('Sorry, but it is not in the cache!')
+                data = self.get_data()
+                rate = data[cn.lower()].get('rate')
+                self.rates[cn] = rate
+                print(f'You received {round(rate * self.amount, 2):.2f} {cn}')
+        # self.show_result()
 
 
 if __name__ == '__main__':
